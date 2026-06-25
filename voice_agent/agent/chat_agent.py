@@ -12,27 +12,19 @@ logger = logging.getLogger("voice_agent.chat_agent")
 
 
 class ChatAgent(AgentService):
-    def __init__(
-        self,
-        url: str | None = None,
-        token: str | None = None,
-    ) -> None:
+    def __init__(self, url=None, token=None):
         self.url = url or settings.AGENT_URL
         self.token = token or settings.AGENT_INTERNAL_TOKEN
         self._client = httpx.AsyncClient()
         logger.info("[CHAT_AGENT] Initialized url=%s has_token=%s", self.url, bool(self.token))
 
-    async def chat(
-        self,
-        question: str,
-        session_id: str | None = None,
-    ) -> AsyncIterator[AgentEvent]:
+    async def chat(self, question, session_id=None):
         payload = {
             "question": question,
             "streaming": True,
             "overrideConfig": {"sessionId": session_id},
         }
-        headers: dict[str, str] = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token.strip()}"
 

@@ -10,7 +10,7 @@ logger = logging.getLogger("voice_agent.elevenlabs")
 
 
 class ElevenLabsService(VoiceService):
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key=None):
         self.api_key = api_key or settings.ELEVENLABS_API_KEY
         self.base_url = settings.ELEVENLABS_BASE_URL
         self._client = httpx.AsyncClient(timeout=60.0)
@@ -18,11 +18,11 @@ class ElevenLabsService(VoiceService):
 
     async def text_to_speech(
         self,
-        text: str,
-        voice_id: str = settings.ELEVENLABS_VOICE_ID,
-        model_id: str = settings.ELEVENLABS_TTS_MODEL_ID,
-        output_format: str = "mp3_44100_128",
-    ) -> AsyncIterator[bytes]:
+        text,
+        voice_id=settings.ELEVENLABS_VOICE_ID,
+        model_id=settings.ELEVENLABS_TTS_MODEL_ID,
+        output_format="mp3_44100_128",
+    ):
         url = f"{self.base_url}/v1/text-to-speech/{voice_id}/stream"
 
         headers = {
@@ -42,16 +42,16 @@ class ElevenLabsService(VoiceService):
 
     async def speech_to_text(
         self,
-        audio_data: bytes,
-        audio_filename: str,
-        model_id: str = settings.ELEVENLABS_STT_MODEL_ID,
-        language_code: str | None = None,
-    ) -> dict:
+        audio_data,
+        audio_filename,
+        model_id=settings.ELEVENLABS_STT_MODEL_ID,
+        language_code=None,
+    ):
         url = f"{self.base_url}/v1/speech-to-text"
 
         headers = {"xi-api-key": self.api_key}
 
-        data: dict[str, str | None] = {"model_id": model_id}
+        data = {"model_id": model_id}
         if language_code:
             data["language_code"] = language_code
 

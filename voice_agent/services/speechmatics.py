@@ -12,7 +12,7 @@ logger = logging.getLogger("voice_agent.speechmatics")
 
 
 class SpeechmaticsService(VoiceService):
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key=None):
         self.api_key = api_key or settings.SPEECHMATICS_API_KEY
         self.tts_base_url = settings.SPEECHMATICS_TTS_BASE_URL
         self.stt_base_url = settings.SPEECHMATICS_STT_BASE_URL
@@ -21,11 +21,11 @@ class SpeechmaticsService(VoiceService):
 
     async def text_to_speech(
         self,
-        text: str,
-        voice_id: str = settings.SPEECHMATICS_TTS_VOICE_ID,
-        model_id: str = "",
-        output_format: str = "mp3_44100_128",
-    ) -> AsyncIterator[bytes]:
+        text,
+        voice_id=settings.SPEECHMATICS_TTS_VOICE_ID,
+        model_id="",
+        output_format="mp3_44100_128",
+    ):
         url = f"{self.tts_base_url}/generate/{voice_id}"
 
         if not self.api_key:
@@ -47,11 +47,11 @@ class SpeechmaticsService(VoiceService):
 
     async def speech_to_text(
         self,
-        audio_data: bytes,
-        audio_filename: str,
-        model_id: str = settings.SPEECHMATICS_STT_MODEL_ID,
-        language_code: str | None = settings.SPEECHMATICS_STT_LANGUAGE,
-    ) -> dict:
+        audio_data,
+        audio_filename,
+        model_id=settings.SPEECHMATICS_STT_MODEL_ID,
+        language_code=settings.SPEECHMATICS_STT_LANGUAGE,
+    ):
         if not self.api_key:
             raise ValueError("SPEECHMATICS_API_KEY is not set")
 
@@ -70,7 +70,6 @@ class SpeechmaticsService(VoiceService):
             "config": (None, json.dumps(config), "application/json"),
         }
 
-        # Submit transcription job
         response = await self._client.post(self.stt_base_url, headers=headers, files=files)
         if response.status_code not in (200, 201):
             logger.error("[SPEECHMATICS:STT] Failed to create job: body=%s", response.text[:300])
@@ -82,7 +81,6 @@ class SpeechmaticsService(VoiceService):
         job_data = response.json()
         job_id = job_data["id"]
 
-        # Poll until complete (max ~5 min)
         job_url = f"{self.stt_base_url}{job_id}"
         max_retries = 300
         poll_interval = 1.0
@@ -103,13 +101,11 @@ class SpeechmaticsService(VoiceService):
         else:
             raise RuntimeError(f"Speechmatics job {job_id} timed out after {max_retries * poll_interval:.0f}s")
 
-        # Fetch transcript
         transcript_url = f"{self.stt_base_url}{job_id}/transcript"
         transcript_res = await self._client.get(transcript_url, headers=headers)
         transcript_res.raise_for_status()
         transcript_data = transcript_res.json()
 
-        # Reconstruct text from results
         results = transcript_data.get("results", [])
         text_parts = []
 
